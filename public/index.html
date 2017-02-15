@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket.IO chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font: 13px Helvetica, Arial;
+        }
+
+        form {
+            background: #000;
+            padding: 3px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        form input {
+            border: 0;
+            padding: 10px;
+            width: 90%;
+            margin-right: .5%;
+        }
+
+        form button {
+            width: 9%;
+            background: rgb(130, 224, 255);
+            border: none;
+            padding: 10px;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages li.myMessage{
+            text-align: right;
+        }
+
+        #messages li {
+            padding: 5px 10px;
+        }
+
+        .notificatins {
+            color: #FFF;
+            padding: 5px 0px;
+        }
+    </style>
+</head>
+<body>
+<ul id="messages"></ul>
+
+<form action="">
+    <div class="notificatins"  style="display: none">Alguien esta escribiendo..</div>
+    <input id="m" autocomplete="off"/>
+    <button>Send</button>
+</form>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+<script>
+    var $m = $('#m');
+    var socket = io();
+    var writer = true;
+    $('form').submit(function () {
+        socket.emit('chat_message', {type: "global_message", message: $('#m').val(), id: socket.id});
+        writer = false;
+        socket.emit('chat writer', {status: writer});
+        $m.val('');
+        return false;
+    });
+
+
+
+    $m.on("keyup", function (el) {
+        var length = $(this).val().length;
+        if (length == 0) {
+            socket.emit('chat writer', {status: false});
+            writer = true;
+        }
+        if (length > 0 && writer == true) {
+            socket.emit('chat writer', {status: writer});
+            writer = false;
+        }
+    });
+
+    socket.on('chat writer', function (msg) {
+        if (msg.status == true) {
+            $('.notificatins').show();
+        }else{
+            $('.notificatins').hide();
+        }
+
+    });
+
+    function appendMessage(msg){
+        var $li = $('<li>');
+        if (msg.id == socket.id) {
+            $li.addClass("myMessage")
+        }
+        $li.text(msg.message);
+        $('#messages').append($li);
+    }
+
+    socket.on('chat_message', appendMessage);
+</script>
+</body>
+</html>
